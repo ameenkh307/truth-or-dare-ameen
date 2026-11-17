@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Truth or Dare by Ameen</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--gold:#e3c16e;--gold2:#f8e9b9;--bg:#090909;--panel:#171510;--line:#594724;--muted:#b7b1a2}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#382b18,#111 43%,#070707);color:#f8f1df;font-family:Arial,sans-serif;min-height:100vh}
+.wrap{max-width:900px;margin:auto;padding:20px 14px 50px}header{text-align:center;padding:12px 0 20px}.kicker{font-size:10px;letter-spacing:5px;color:var(--gold)}h1{font:clamp(34px,8vw,58px) Georgia,serif;color:var(--gold2);margin:10px 0 0;text-shadow:0 0 24px #b58b3d66}.by{font:italic 15px Georgia,serif;color:#c8ad6b;letter-spacing:2px}.sub{font-size:12px;color:#aaa;margin-top:9px}
+.card{background:linear-gradient(145deg,#1d1b15,#101010);border:1px solid var(--line);border-radius:17px;padding:17px;margin:14px 0;box-shadow:0 10px 28px #0008}h2{font:23px Georgia,serif;color:var(--gold2);margin:0 0 14px}
+input,textarea{width:100%;background:#090909;border:1px solid #5b4928;border-radius:10px;color:white;padding:12px;font:inherit;outline:none}input:focus,textarea:focus{border-color:var(--gold)}textarea{min-height:100px;resize:vertical}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.row input{flex:1;min-width:170px}.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:bold;cursor:pointer}.gold{background:linear-gradient(135deg,#f5e2a4,#b88a34);color:#171108}.dark{background:#29251d;color:var(--gold2);border:1px solid #64502b}.danger{background:#4b2020;color:#ffe1dc;border:1px solid #85433d}.btn:disabled{opacity:.45;cursor:not-allowed}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chip{background:#2b2417;border:1px solid #66512b;border-radius:30px;padding:8px 12px;font-size:13px;color:#f5e6b7}
+.center{text-align:center}.pointer{color:var(--gold2);font-size:25px;height:27px}.wheel{width:min(78vw,350px);height:min(78vw,350px);margin:0 auto 17px;border:7px solid #b88a32;border-radius:50%;box-shadow:0 0 0 4px #302719,0 0 30px #9a742c66;overflow:hidden;transition:transform 4.5s cubic-bezier(.12,.72,.12,1)}canvas{width:100%;height:100%;display:block}.result{font:26px Georgia,serif;color:var(--gold2);min-height:34px;margin:12px}
+.choice{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}.choice button{min-width:135px;padding:16px;font-size:17px}.truth{background:linear-gradient(135deg,#f4df9b,#b88b34);color:#171108}.dare{background:linear-gradient(135deg,#762d2d,#351313);color:#ffe1dc;border:1px solid #9d5146}.prompt{font:clamp(19px,4vw,27px)/1.4 Georgia,serif;color:#fff0c8;text-align:center;padding:15px 4px;min-height:75px}
+.muted,.hint{font-size:12px;color:var(--muted);line-height:1.5}.hint{margin-top:9px}.hidden{display:none!important}.actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.listitem{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #3a3120;padding:9px 0;font-size:13px}.listitem span{overflow-wrap:anywhere}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.status{font-size:12px;color:#b8d9a5}
+footer{text-align:center;color:#827454;font-size:10px;letter-spacing:2px;margin-top:25px}
+</style></head>
+<body><div class="wrap">
+<header><div class="kicker">THE PRIVATE GAME NIGHT</div><h1>TRUTH OR DARE</h1><div class="by">by Ameen</div><div class="sub">A little honesty. A little courage. A lot of fun.</div></header>
+
+<section class="card" id="game">
+<h2>01 / Players</h2><div class="row"><input id="playerInput" maxlength="22" placeholder="Enter player name"><button class="btn gold" id="addPlayer">+ ADD PLAYER</button></div>
+<div class="chips" id="playerChips"></div><div class="hint" id="playerCount">Add 2–10 players.</div>
+</section>
+
+<section class="card center"><h2>02 / Spin the wheel</h2><div class="pointer">▼</div><div class="wheel" id="wheel"><canvas id="wheelCanvas" width="700" height="700"></canvas></div>
+<button class="btn gold" id="spin">SPIN THE WHEEL</button><div class="result" id="winner"></div>
+<div class="muted">The same player cannot be selected on two consecutive turns. Anyone can come again after another player's turn.</div></section>
+
+<section class="card hidden" id="turn"><h2>03 / Your turn</h2><div class="choice"><button class="btn truth" id="truth">♥ TRUTH</button><button class="btn dare" id="dare">⚡ DARE</button></div><div class="prompt" id="prompt">Choose Truth or Dare.</div>
+<div class="actions hidden" id="taskActions"><button class="btn dark" id="done">COMPLETED</button><button class="btn dark" id="skip">SKIP</button></div>
+<div class="actions"><button class="btn gold hidden" id="next">NEXT TURN →</button></div></section>
+
+<section class="card hidden" id="adminArea"><h2>04 / Admin</h2><div id="loginBox"><p class="muted">Admin login is for Ameen only. Players do not need to log in.</p><input id="email" type="email" placeholder="Admin email" autocomplete="username"><div style="height:8px"></div><input id="password" type="password" placeholder="Password" autocomplete="current-password"><div class="actions"><button class="btn gold" id="login">ADMIN LOGIN</button></div><div class="hint" id="loginMsg"></div></div>
+<div id="adminPanel" class="hidden"><div class="row" style="justify-content:space-between"><span class="status" id="adminStatus">Admin logged in</span><button class="btn dark" id="logout">LOG OUT</button></div>
+<div class="tabs" style="margin-top:14px"><button class="btn dark" id="truthTab">TRUTH QUESTIONS</button><button class="btn dark" id="dareTab">DARE CHALLENGES</button></div>
+<label class="hint" id="editorLabel">Add a Truth question</label><textarea id="newQuestion" placeholder="Type one question or dare..."></textarea>
+<div class="actions"><button class="btn gold" id="addQuestion">ADD TO DATABASE</button></div><div class="hint" id="adminMsg"></div>
+<h2 style="margin-top:20px">Saved questions</h2><div id="questionList"></div></div></section>
+<section class="card"><h2>Game rules</h2><div class="muted">1. Add 2–10 players. 2. Spin to select a player. 3. The same player cannot be selected twice in a row. 4. Choose Truth or Dare. 5. Questions may repeat. Skipping is okay—respect everyone's comfort.</div><div class="actions"><button class="btn danger" id="reset">RESET GAME</button></div></section>
+<footer>PLAY FAIR • RESPECT EVERYONE • HAVE FUN</footer></div>
+<script>
+const SUPABASE_URL='https://xwmhyffihsgaytwmvmct.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_lr98w0Bh5EeuXusb3ZVYXQ_9lJEuhEP';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const $=id=>document.getElementById(id);
+let players=[],lastPlayer=null,currentPlayer=null,spinning=false,rotation=0,category='truth',questions={truth:[],dare:[]},editingId=null;
+const canvas=$('wheelCanvas'),ctx=canvas.getContext('2d');
+function drawWheel(){const cx=350,cy=350,r=340;ctx.clearRect(0,0,700,700);if(!players.length){ctx.fillStyle='#211a10';ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();ctx.fillStyle='#f2d98e';ctx.font='bold 34px Arial';ctx.textAlign='center';ctx.fillText('ADD PLAYERS',cx,cy+12);return}
+const colors=['#a77d2c','#211d16','#d0a64b','#302315','#bd913a','#17130f','#8f6828','#282017','#d7b15a','#21180f'],step=2*Math.PI/players.length;
+players.forEach((p,i)=>{let a=-Math.PI/2+i*step;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,a+step);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle='#f1d58b';ctx.lineWidth=3;ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate(a+step/2);ctx.textAlign='right';ctx.fillStyle='#fff8df';ctx.font=`bold ${players.length>7?21:26}px Arial`;ctx.shadowColor='#000';ctx.shadowBlur=4;ctx.fillText(p.length>16?p.slice(0,15)+'…':p,r-25,8);ctx.restore()});ctx.beginPath();ctx.arc(cx,cy,52,0,Math.PI*2);ctx.fillStyle='#090909';ctx.fill();ctx.lineWidth=5;ctx.strokeStyle='#e1bd63';ctx.stroke()}
+function renderPlayers(){$('playerChips').innerHTML='';players.forEach((p,i)=>{let s=document.createElement('span');s.className='chip';s.textContent=p+' ';let b=document.createElement('button');b.textContent='×';b.className='btn dark';b.style.padding='1px 6px';b.onclick=()=>{players.splice(i,1);if(lastPlayer===p)lastPlayer=null;renderPlayers();drawWheel()};s.appendChild(b);$('playerChips').appendChild(s)});$('playerCount').textContent=`${players.length}/10 players added.`}
+function addPlayer(){let n=$('playerInput').value.trim();if(!n)return;if(players.length>=10)return alert('Maximum 10 players.');if(players.some(x=>x.toLowerCase()===n.toLowerCase()))return alert('Name already added.');players.push(n);$('playerInput').value='';renderPlayers();drawWheel()}
+$('addPlayer').onclick=addPlayer;$('playerInput').addEventListener('keydown',e=>{if(e.key==='Enter')addPlayer()});
+function spinSound(){try{let AC=window.AudioContext||window.webkitAudioContext,ac=new AC(),t=ac.currentTime;for(let i=0;i<22;i++){let o=ac.createOscillator(),g=ac.createGain();o.frequency.value=520+(i%4)*95;g.gain.setValueAtTime(.0001,t+i*.19);g.gain.exponentialRampToValueAtTime(.045,t+i*.19+.01);g.gain.exponentialRampToValueAtTime(.0001,t+i*.19+.075);o.connect(g);g.connect(ac.destination);o.start(t+i*.19);o.stop(t+i*.19+.08)}setTimeout(()=>ac.close(),5000)}catch(e){}}
+$('spin').onclick=()=>{if(spinning)return;if(players.length<2)return alert('Add at least 2 players.');let opts=players.filter(p=>p!==lastPlayer);if(!opts.length)opts=players.slice();let chosen=opts[Math.floor(Math.random()*opts.length)];currentPlayer=chosen;spinning=true;$('spin').disabled=true;$('turn').classList.add('hidden');$('winner').textContent='Spinning…';spinSound();let idx=players.indexOf(chosen),slice=360/players.length,desired=360-(idx*slice+slice/2),norm=((rotation%360)+360)%360,delta=(desired-norm+360)%360;rotation+=360*6+delta;$('wheel').style.transform=`rotate(${rotation}deg)`;setTimeout(()=>{spinning=false;$('spin').disabled=false;lastPlayer=chosen;$('winner').textContent='✦ '+chosen+' ✦';$('turn').classList.remove('hidden');$('prompt').textContent='Choose Truth or Dare.';$('truth').disabled=false;$('dare').disabled=false;$('taskActions').classList.add('hidden');$('next').classList.add('hidden')},4650)};
+async function loadQuestions(){let {data,error}=await db.from('questions').select('id,category,question').order('id');if(error){console.error(error);return}questions={truth:data.filter(x=>x.category==='truth'),dare:data.filter(x=>x.category==='dare')}}
+function pickTask(type){let a=questions[type];if(!a.length){$('prompt').textContent='No '+type+' questions have been added yet.';$('next').classList.remove('hidden');return}let q=a[Math.floor(Math.random()*a.length)];$('prompt').textContent=q.question;$('taskActions').classList.remove('hidden');$('next').classList.remove('hidden')}
+$('truth').onclick=()=>{$('truth').disabled=true;$('dare').disabled=true;pickTask('truth')};$('dare').onclick=()=>{$('truth').disabled=true;$('dare').disabled=true;pickTask('dare')};
+$('done').onclick=()=>{$('taskActions').classList.add('hidden');$('next').classList.remove('hidden')};$('skip').onclick=()=>{$('taskActions').classList.add('hidden');$('next').classList.remove('hidden')};$('next').onclick=()=>{$('turn').classList.add('hidden');$('winner').textContent='';currentPlayer=null};
+$('reset').onclick=()=>{if(!confirm('Reset all players and the current game? Saved questions will remain.'))return;players=[];lastPlayer=null;rotation=0;$('wheel').style.transform='rotate(0deg)';renderPlayers();drawWheel();$('winner').textContent='';$('turn').classList.add('hidden')};
+function setCategory(c){category=c;editingId=null;$('newQuestion').value='';$('editorLabel').textContent=c==='truth'?'Add a Truth question':'Add a Dare challenge';$('addQuestion').textContent='ADD TO DATABASE';renderQuestionList()}
+$('truthTab').onclick=()=>setCategory('truth');$('dareTab').onclick=()=>setCategory('dare');
+function renderQuestionList(){$('questionList').innerHTML='';let arr=questions[category];if(!arr.length){$('questionList').textContent='No saved '+category+' items yet.';return}arr.forEach(q=>{let d=document.createElement('div');d.className='listitem';let s=document.createElement('span');s.textContent=q.question;let box=document.createElement('div');let e=document.createElement('button');e.className='btn dark';e.textContent='EDIT';e.onclick=()=>{editingId=q.id;$('newQuestion').value=q.question;$('editorLabel').textContent='Edit '+category;$('addQuestion').textContent='SAVE CHANGES'};let del=document.createElement('button');del.className='btn danger';del.textContent='DELETE';del.onclick=async()=>{if(!confirm('Delete this item?'))return;let {error}=await db.from('questions').delete().eq('id',q.id);if(error)return alert(error.message);await loadQuestions();renderQuestionList()};box.append(e,del);d.append(s,box);$('questionList').append(d)})}
+$('addQuestion').onclick=async()=>{let value=$('newQuestion').value.trim();if(!value)return alert('Enter a question or dare.');let res=editingId?await db.from('questions').update({question:value}).eq('id',editingId):await db.from('questions').insert({category,question:value});if(res.error){$('adminMsg').textContent=res.error.message;return}editingId=null;$('newQuestion').value='';$('adminMsg').textContent='Saved successfully.';$('addQuestion').textContent='ADD TO DATABASE';await loadQuestions();renderQuestionList()};
+function showAdmin(on){$('loginBox').classList.toggle('hidden',on);$('adminPanel').classList.toggle('hidden',!on);if(on)renderQuestionList()}
+$('login').onclick=async()=>{let {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginMsg').textContent=error.message;return}let {data:adm,error:ae}=await db.from('admin_users').select('user_id').eq('user_id',data.user.id).maybeSingle();if(ae||!adm){await db.auth.signOut();$('loginMsg').textContent='This account is not authorized as admin.';return}showAdmin(true);$('loginMsg').textContent='';$('password').value='';$('adminStatus').textContent='Logged in as '+data.user.email};
+$('logout').onclick=async()=>{await db.auth.signOut();showAdmin(false)};
+async function initAuth(){let {data}=await db.auth.getSession();if(data.session){let {data:adm}=await db.from('admin_users').select('user_id').eq('user_id',data.session.user.id).maybeSingle();if(adm)showAdmin(true);else await db.auth.signOut()}}
+function routeView(){ $('adminArea').classList.toggle('hidden', location.hash !== '#admin'); }
+window.addEventListener('hashchange', routeView);
+routeView();
+loadQuestions().then(drawWheel);renderPlayers();drawWheel();initAuth();
+</script></body></html>
